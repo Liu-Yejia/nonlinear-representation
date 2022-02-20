@@ -1,0 +1,158 @@
+if(0){
+  library(stringr)
+  load(file = "C:/Users/yanag/Desktop/G3/G3_Matrices_7_Corpora_new.rdata")
+}
+# 제일열의 요소을 연결하다.
+if(0){
+  texts<-rep("", 440)
+  for(i in 1:440){
+    texts[i]<-paste0(G3_Matrices_7_Corpora_new[[i]][[1]][,1], collapse="")
+  }
+}
+
+# save(texts, file = "C:/Users/yanag/Desktop/texts.rdata")
+load(file = "C:/Users/yanag/Desktop/texts.rdata")
+library(stringr)
+input<-"厚い鎧に大剣を持ち、少々の傷を押して相手に強烈な一撃を叩き込むことを得意とする素性。また戦技落雷によって中距離への攻撃もできた。狼の戦鬼であるバルグラムは、円卓を訪れた最初の褪せ人たちのひとりとして知られている。"
+input<-"多くの人々は日曜日の朝を休息の象徴として考える。しかし少年時代をとおして、天吾が日曜日の朝を喜ばしいものと考えたことは一度もなかった。日曜日は常に彼の気持ちを沈み込ませた。週末になると身体がどんよりと重くなり、食欲が失われ、身体のあちこちが痛くなった。天吾にとって日曜日は、暗黒の裏側だけを向け続ける歪んだ月のような存在だった。日曜日がめぐってこなければどんなにいいだろうと、少年時代の天吾はよく思った。毎日学校があって、休みなんかなければどんなに楽しいだろう。日曜日が来ないようにと祈りもした。もちろんそんな祈りが聞き届けられることはなかったが。大人になり、日曜日が現実の脅威ではなくなった今でも、日曜日の朝に目を覚まし、わけもなく暗い気持ちになることがある。身体の節々に軋みを感じ、吐き気を覚えることもある。そういう反応が心に染みついてしまっているのだ。おそらくは深い無意識の領域まで。"
+input<-"日本には古の時代から、八百万の神や化生を畏れる文化がありました。そうした古くからの神秘が息づく幻想の日本を、フロムソフトウェアが描くとどうなるのか。伝統と革新が同居する。和風ダーク・ファンタジーの世界がそこにはあります。"
+# command<-paste("echo", sentence, "| cabocha")
+# completed<-command %>% shell(intern=TRUE) %>% str_replace_all(" +", "") %>% str_replace_all("-+.+$", "") %>% head(-1)
+
+fun_cabocha_predicate_searching<-function(input){
+  if(0){
+    # input <- "18歳以下の子どもを対象にした10万円相当の給付策で、岸田文雄首相が所得制限を「世帯主ごと（の年収）で判断する」と述べたことについて、松野博一官房長官は16日の会見で「児童手当における所得制限と同様、主たる生計維持者の収入を基準として判断されることになる」と述べ、世帯の中で所得が最も高い人の年収で判断すると修正した。"
+    # input <- "彼は学生だ。象は鼻が長い。この地域の気候は、温暖だ。明日は雪が降る。"
+  }
+  if(str_detect(input, "[\n 　]")){
+    input<-input %>% str_remove_all("\n") %>% str_remove_all("[ 　]")
+  }
+  input<-chartr(old = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&()",
+                new = "０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ＆（）",
+                input)
+  if(str_detect(input, "[。！？]")){
+    punctuation_marks<-input %>% str_extract_all("[。！？]") %>% unlist
+    sentences_pool<-input %>% str_split("[。！？]") %>% unlist %>% head(-1) # %>% paste0(punctuation_marks)
+  }else{
+    sentences_pool<-input
+  }
+  len_sen<-sentences_pool %>% length
+  predicate_vec<-character()
+# 압축후글못<-character() # 压缩后句子池（空）
+  圧縮後文池<-character()
+# 이차원<-list() # 二次元：将直接与述语文节接续的各文节与述语文节联结，等所有可能的“部分句”集。
+  二次元<-list()
+# 대구성<-list()
+  大構成<-list()
+# 술어_디지털<-list()
+  述語_デジタル<-list()
+# 단축한글_디지털<-list()
+  短縮文_デジタル<-list()
+# 가능구조_디지털<-list()
+  可能構造_デジタル<-list()
+  for(i in 1:len_sen){
+    # 接下去这段为新加的，用来定位包括述语文节和与述语直接接续的文节在内的所有文节，用来定位的信息包括各文节首/末字符/词素在句中位置，和各文节在句中的序列号。
+    if(1){
+      len_cha<-sentences_pool[i] %>% nchar # 首先计算当前句子的长度，单位为字符。
+    }
+    command<-paste("echo", sentences_pool[i], "| cabocha")
+    completed<-command %>% shell(intern=TRUE) %>% str_replace_all(" +", "") %>% str_replace_all("-+.+$", "") %>% head(-1)
+    if(1){
+    # 말<-completed %>% nchar %>% cumsum # 各文节末字符在句中的位置。
+      末<-completed %>% nchar %>% cumsum
+    # 첫<-말 %>% c(0, .) %>% head(-1) + 1 # 各文节首字符在句中的位置。
+      初<-末 %>% c(0, .) %>% head(-1) + 1
+    }
+    command_1<-paste("echo", sentences_pool[i], "| cabocha -f1")
+    completed_1<-command_1 %>% shell(intern=TRUE)
+    # 接下去这段为新加的，用来抽取各文节中在句中的坐标，单位为词素。
+    if(1){
+      c_1<-completed_1 %>% str_split_fixed("( |\\t)", 2) %>% head(-1) %>% .[-1, ]
+    # pos_별표<-which(c_1[, 1]=="*")
+      pos_星印<-which(c_1[, 1]=="*")
+    # num_별표<-length(pos_별표)
+      num_星印<-length(pos_星印)
+    # len_vec<-pos_별표-c(0, pos_별표 %>% head(-1))-1
+      len_vec<-pos_星印-c(0, pos_星印 %>% head(-1))-1
+    # 말_1<-len_vec %>% cumsum
+      末_1<-len_vec %>% cumsum
+    # 첫_1<-c(1, 말_1+1)
+      初_1<-c(1, 末_1+1)
+    # 말_1<-c(말_1, c_1%>%nrow - num_별표)
+      末_1<-c(末_1, c_1%>%nrow - num_星印)
+    # c_1<-c_1[-pos_별표, ]
+      c_1<-c_1[-pos_星印, ]
+    # 구성<-list()
+      構成<-list() # 记录当前句内各文节的初词素和末词素在当前句子中的序列号。
+    # for(j in 1:(1+num_별표)){
+      for(j in 1:(1+num_星印)){
+      # 구성[[j]]<-c_1[첫_1[j] : 말_1[j], ]
+      # 構成[[j]]<-c_1[初_1[j] : 末_1[j], ]
+      # 구성[[j]]<-c(첫_1[j], 말_1[j])
+        構成[[j]]<-c(初_1[j], 末_1[j])
+      }
+      構成<-構成 %>% unlist %>% matrix(ncol = 2, byrow = T)
+    }
+  # 대구성[[i]]<-구성
+  # 大構成[[i]]<-構成
+    大構成[[i]]<-構成
+    completed_1<-completed_1[completed_1 %>% str_detect("^\\*")]
+    completed_1<-completed_1 %>% str_split_fixed(" ", 5)
+    completed_1_df<-as.data.frame(completed_1)
+    completed_1_df[, 3]<-str_remove_all(completed_1_df[, 3], "D")
+    predicate_num<-which(completed_1_df[,3]==-1)
+  # 술어_디지털[[i]]  <-구성[[predicate_num]][1] : 구성[[predicate_num]][2]
+    述語_デジタル[[i]]<-構成[predicate_num, 1]:構成[predicate_num,2]
+  # 연결용부품번호<-which(completed_1_df[,3]==completed_1_df[predicate_num, 2]) %>% c(predicate_num)
+    連結用部分番号<-which(completed_1_df[,3]==completed_1_df[predicate_num, 2]) %>% c(predicate_num)
+    predicate<-completed[predicate_num]
+    predicate_vec<-c(predicate_vec, predicate)
+  # 압축후글<-paste0(completed[연결용부품번호], collapse = "")
+    圧縮後文<-paste0(completed[連結用部分番号], collapse = "")
+    temporary_vec<-NULL
+  # for(j in 연결용부품번호){
+    for(j in 連結用部分番号){
+    # temporary_vec<-c(temporary_vec, 構成[[j]][1]:構成[[j]][2])
+      temporary_vec<-c(temporary_vec, 構成[j,1]:構成[j,2])
+    }
+  # 단축한글_디지털[[i]]<-temporary_vec
+    短縮文_デジタル[[i]]<-temporary_vec
+  # 압축후글못<-c(압축후글못, 압축후글)
+    圧縮後文池<-c(圧縮後文池, 圧縮後文)
+  # if(length(연결용부품번호)>2){
+    if(length(連結用部分番号)>2){
+    # 이차원[[i]]<-paste0(completed[head(연결용부품번호, -1)], predicate)
+      二次元[[i]]<-paste0(completed[head(連結用部分番号, -1)], predicate)
+    }else{
+    # 이차원[[i]]<-paste0(completed[연결용부품번호], collapse="")
+      二次元[[i]]<-paste0(completed[連結用部分番号], collapse="")
+    }
+    temporary_list<-list()
+  # for(j in 1 : (length(연결용부품번호)-1)){
+    for(j in 1 : (length(連結用部分番号)-1)){
+    # temporary_list[[j]]<-c(구성[[연경용부품번호[j]]][1]:구성[[연경용부품번호[j]]][2], 구성[[predicate_num]][1]:구성[[predicate_num]][2])
+      temporary_list[[j]]<-c(構成[連結用部分番号[j],1]:構成[連結用部分番号[j],2], 構成[predicate_num,1]:構成[predicate_num,2])
+    }
+  # 가능구조_디지털[[i]] <- temporary_list
+    可能構造_デジタル[[i]]<-temporary_list
+  }
+  list(述語ベクトル = predicate_vec, # 述语集
+     # 圧縮後文プール = 압축후글못, # 缩句后句子集：保留与述语文节直接接续的文节，将其于述语文节连接，得一核心句，即缩句后句子。
+       圧縮後文プール = 圧縮後文池,
+     # 二文節の組合せ = unlist(이차원), # 缩句后句子的成分间的组合（1）：将"与述语文节直接接续的文节"和"述语文节"一一按序结合，得"部分句"集。
+       二文節の組合せ = unlist(二次元),
+       # 为了从G3中获取包括活用形信息在内的词素解析结果，将上述3个成分序号化。
+     # 대구성 = 대구성 # 将［構成／구성］按序整合成1个list对象。
+       大構成 = 大構成,
+     # 술어_디지털 = 술어_디지털,
+       述語_デジタル = 述語_デジタル,
+     # 단출한글_디지털 = 단출한글,
+       短縮文_デジタル = 短縮文_デジタル,
+     # 가능구조_디지털 = 가능구조_디지털,
+       可能構造_デジタル = 可能構造_デジタル
+      ) # ->list_A
+  # return(predicate_vec)
+  # num_phrase_patterns<-length(completed)
+}
+res_A <- input %>% fun_cabocha_predicate_searching
+res_A$可能構造_デジタル
